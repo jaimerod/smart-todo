@@ -1,0 +1,44 @@
+name: Load DB and Compile Theme,
+run-name: ${{ github.actor }} is loading the DB and compiling the theme.
+on: [push]
+jobs:
+  Load-the-DB:
+    name: Load the Database
+    if: github.ref == 'refs/heads/develop'
+    runs-on: self-hosted
+    steps:
+      - name: display info
+        run: |
+          echo "🎉 The job was automatically triggered by a ${{ github.event_name }} event."
+          echo "🐧 This job is now running on a ${{ runner.os }} server hosted by GitHub!"
+          echo "🔎 The name of your branch is ${{ github.ref }} and your repository is ${{ github.repository }}."
+      - name: git checkout
+        run: |
+          cd /var/www/drupal-demo.rodriguez-jr.com/web/
+          git pull
+      - name: mysql 
+        run: |
+          cd /var/www/drupal-demo.rodriguez-jr.com/web/docker/database
+          mysql -udrupal9 -pdrupaldrupal drupal9 --host=localhost < init.sql
+          
+  Compile-the-Theme:
+    name: Compile the theme
+    if: github.ref == 'refs/heads/develop'
+    runs-on: self-hosted 
+    steps:
+      - name: git checkout
+        run: |
+          cd /var/www/drupal-demo.rodriguez-jr.com/web/
+          git pull
+      - name: composer install
+        run: |
+          cd /var/www/drupal-demo.rodriguez-jr.com/web/
+          composer install -n
+      - name: setup node
+        shell: bash -l {0}
+        run: |
+          cd /var/www/drupal-demo.rodriguez-jr.com/web/web/themes/custom/envivent
+          nvm install
+          nvm use
+          npm install
+          ./node_modules/.bin/gulp build
